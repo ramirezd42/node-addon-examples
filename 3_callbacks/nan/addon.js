@@ -1,7 +1,7 @@
 const mustache = require('./build/Release/binding.node')
 const fs = require('fs')
 
-fs.readFile('bye.jpg', renderMustache);
+fs.readFile('face.jpg', renderMustache);
 
 function renderMustache(err, buffer) {
   if (err) throw err;
