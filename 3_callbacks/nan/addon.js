@@ -1,5 +1,15 @@
-var addon = require('bindings')('addon');
+const mustache = require('./build/Release/binding.node')
+const fs = require('fs')
 
-addon(function(msg){
-  console.log(msg); // 'hello world'
-});
+fs.readFile('bye.jpg', renderMustache);
+
+function renderMustache(err, buffer) {
+  if (err) throw err;
+  console.log(buffer)
+  mustache.renderMustache(buffer, mustacheRendered)
+}
+
+function mustacheRendered(data) {
+  console.log(data)
+  console.log('success!')
+}
