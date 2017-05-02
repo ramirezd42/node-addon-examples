@@ -33,8 +33,12 @@ NAN_METHOD(RenderMustache) {
 }
 
 NAN_MODULE_INIT(Init) {
-    Nan::Set(target, Nan::New<v8::String>("renderMustache").ToLocalChecked(),
-        Nan::GetFunction(Nan::New<v8::FunctionTemplate>(RenderMustache)).ToLocalChecked());
+    Nan::Set(target,
+        Nan::New<v8::String>("renderMustache").ToLocalChecked(),
+        Nan::GetFunction(
+          Nan::New<v8::FunctionTemplate>(RenderMustache)
+        ).ToLocalChecked()
+    );
 }
 
 NODE_MODULE(binding, Init)
