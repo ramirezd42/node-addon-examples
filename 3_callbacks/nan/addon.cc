@@ -49,7 +49,11 @@ NODE_MODULE(binding, Init)
 
 class MustacheWorker : public Nan::AsyncWorker {
     public:
-        MustacheWorker(Nan::Callback *callback, char *bufferData, size_t bufferLength)
+        MustacheWorker(
+          Nan::Callback *callback,
+          char *bufferData,
+          size_t bufferLength
+        )
         : Nan::AsyncWorker(callback),
           bufferData(bufferData),
           bufferLength(bufferLength) {}
