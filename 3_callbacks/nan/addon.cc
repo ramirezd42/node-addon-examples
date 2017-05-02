@@ -27,7 +27,9 @@ NAN_METHOD(RenderMustache) {
   v8::Local<v8::Value> argv[argc] = { bufferObj };
 
   Nan::Callback *callback = new Nan::Callback(cb);
-  Nan::AsyncQueueWorker(new MustacheWorker(callback, bufferData, bufferLength));
+  Nan::AsyncQueueWorker(
+    new MustacheWorker(callback, bufferData, bufferLength)
+  );
 }
 
 NAN_MODULE_INIT(Init) {
