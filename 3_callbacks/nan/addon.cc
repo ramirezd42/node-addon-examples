@@ -1,7 +1,7 @@
 #include <nan.h>
-#include <SnapChat/mustache.h>
+#include "worker.h"
 
-void RunCallback(const Nan::FunctionCallbackInfo<v8::Value>& info) {
+NAN_METHOD(RenderMustache) {
   if (info.Length() < 2) {
     Nan::ThrowTypeError("Wrong number of arguments");
     return;
@@ -11,25 +11,59 @@ void RunCallback(const Nan::FunctionCallbackInfo<v8::Value>& info) {
     Nan::ThrowTypeError("Wrong arguments");
     return;
   }
-  
+
   if (!info[1]->IsFunction() || !info[1]->IsFunction()) {
     Nan::ThrowTypeError("Wrong arguments");
     return;
   }
-  
-  Local<Object> bufferObj = args[n]->ToObject();
-  char* bufferData = Buffer::Data(bufferObj);
-  
-  SnapChat::RenderMustache(bufferData);
-  
-  v8::Local<v8::Function> cb = info[0].As<v8::Function>();
+
+  v8::Local<v8::Object> bufferObj = info[0]->ToObject();
+  char* bufferData = node::Buffer::Data(bufferObj);
+  size_t bufferLength = node::Buffer::Length(bufferObj);
+
+  v8::Local<v8::Function> cb = info[1].As<v8::Function>();
+
   const unsigned argc = 1;
-  v8::Local<v8::Value> argv[argc] = { Nan::New(outputFile).ToLocalChecked() };
-  Nan::MakeCallback(Nan::GetCurrentContext()->Global(), cb, argc, argv);
+  v8::Local<v8::Value> argv[argc] = { bufferObj };
+
+  Nan::Callback *callback = new Nan::Callback(cb);
+  Nan::AsyncQueueWorker(new MustacheWorker(callback, bufferData, bufferLength));
 }
 
-void Init(v8::Local<v8::Object> exports, v8::Local<v8::Object> module) {
-  Nan::SetMethod(module, "exports", RunCallback);
+NAN_MODULE_INIT(Init) {
+    Nan::Set(target, Nan::New<v8::String>("renderMustache").ToLocalChecked(),
+        Nan::GetFunction(Nan::New<v8::FunctionTemplate>(RenderMustache)).ToLocalChecked());
 }
 
-NODE_MODULE(addon, Init)
+NODE_MODULE(binding, Init)
+  
+  
+#include <nan.h>
+#include <SnapChat/mustache.h>
+
+class MustacheWorker : public Nan::AsyncWorker {
+    public:
+        MustacheWorker(Nan::Callback *callback, char *bufferData, size_t bufferLength)
+        : Nan::AsyncWorker(callback),
+          bufferData(bufferData),
+          bufferLength(bufferLength) {}
+        ~MustacheWorker() {}
+
+        void Execute () {
+          // this function executes in the worker thread
+          SnapChat::Mustache::Render(bufferData);
+        }
+
+        void HandleOKCallback () {
+            // we are now back in the event loop's thread
+            v8::Local<v8::Value> argv[] = {
+              Nan::NewBuffer(bufferData, bufferLength).ToLocalChecked()
+            };
+            callback->Call(1, argv);
+        }
+
+    private:
+        char *bufferData;
+        size_t bufferLength;
+};
+
